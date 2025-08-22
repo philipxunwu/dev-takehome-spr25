@@ -22,7 +22,7 @@ export async function PUT(request: Request) {
         const currentDate = new Date(); 
 
         const newRequestData: IRequest = {
-            id: newId, 
+            _id: newId, 
             requestorName: requestorName, 
             itemRequested: itemRequested, 
             createdDate: currentDate, 
@@ -62,17 +62,20 @@ export async function GET(request: Request) {
         await dbConnect(); 
 
         const url = new URL(request.url); 
-        const pageParam = url.searchParams.get('page');
-
-        let page = parseInt(pageParam as string, 10); 
-        if (isNaN(page) || page < 1) {
-            page = 1; 
-        }
+        const page = parseInt(url.searchParams.get("page") || "1"); 
+        const status = url.searchParams.get("status")     
 
         const skipCount = (page - 1) * PAGINATION_PAGE_SIZE; 
 
-        const requests = await RequestModel.find({})
-            .sort({ createdAt: -1 }) 
+        let query = {}
+        if (status) {
+            query = {
+                status: status, 
+            }
+        }
+
+        const requests = await RequestModel.find(query)
+            .sort({ createdDate: -1 }) 
             .skip(skipCount) 
             .limit(PAGINATION_PAGE_SIZE)
             .exec(); 
@@ -88,7 +91,6 @@ export async function GET(request: Request) {
 
         return NextResponse.json(responseData, { status: successResponse.code } );
     } catch (error: any) {
-
         const errorResponse = RESPONSES[ResponseType.UNKNOWN_ERROR];
 
         return NextResponse.json(
@@ -98,5 +100,71 @@ export async function GET(request: Request) {
             },
             { status: errorResponse.code }
         );
+    }
+}
+
+export async function PATCH(request: Request) {
+    try {
+        await dbConnect(); 
+
+        const { id, status }= await request.json(); 
+        const editTime = new Date(); 
+
+        const updatedData = {
+            status: status, 
+            lastEditedDate: editTime, 
+        }
+
+        const updatedRequest = await RequestModel.findByIdAndUpdate(
+            id, 
+            updatedData,
+            { new: true, runValidators: true }
+        ).exec(); 
+
+        if (!updatedRequest) {
+            const notFoundResponse = RESPONSES[ResponseType.NOT_FOUND]
+            return NextResponse.json(
+                { message: notFoundResponse.code }, 
+                { status: notFoundResponse.code }
+            )
+        }
+
+        
+        const successResponse = RESPONSES[ResponseType.SUCCESS]; 
+        const responseData = {
+            message: successResponse.message,
+            data: updatedRequest, 
+        }
+        return NextResponse.json(
+            responseData, 
+            { status: successResponse.code } 
+        );
+    } catch (error: any) {
+        const errorResponse = RESPONSES[ResponseType.UNKNOWN_ERROR];
+
+        return NextResponse.json(
+            { 
+                message: errorResponse.message,
+                data: null,
+            },
+            { status: errorResponse.code }
+        );
+    }
+}
+
+export async function DELETE(request: Request) {
+    // test endpoint to clear mongodb as needed
+    try { 
+        await dbConnect(); 
+
+        const result = await RequestModel.deleteMany({});
+
+        return NextResponse.json({ 
+            message: "Successfully deleted all items.", 
+        }, { status: HTTP_STATUS_CODE.OK })
+    } catch (error) {
+        return NextResponse.json({
+            message: "An error occurred while deleting items.",
+        }, { status: 500 });
     }
 }

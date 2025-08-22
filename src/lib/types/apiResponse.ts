@@ -11,6 +11,7 @@ export enum HTTP_STATUS_CODE {
 
 export enum ResponseType {
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
+  NOT_FOUND = "NOT_FOUND", 
   INVALID_INPUT = "INVALID_INPUT",
   UNAUTHORIZED = "UNAUTHORIZED",
   FORBIDDEN = "FORBIDDEN",
@@ -25,6 +26,10 @@ export const RESPONSES: Record<
   [ResponseType.UNKNOWN_ERROR]: {
     message: "An unknown error occurred.",
     code: HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+  },
+  [ResponseType.NOT_FOUND]: {
+    message: "Resource not found.", 
+    code: HTTP_STATUS_CODE.NOT_FOUND, 
   },
   [ResponseType.INVALID_INPUT]: {
     message: "Invalid input was received.",

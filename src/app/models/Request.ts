@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 
 export interface IRequest {
-  id: string;
+  _id: string;
   requestorName: string;
   itemRequested: string;
   createdDate: Date;
@@ -10,7 +10,7 @@ export interface IRequest {
 }
 
 const RequestSchema: Schema<IRequest> = new Schema<IRequest>({
-  id: {
+  _id: {
     type: String,
     required: [true, 'ID is required.'],
     unique: true // Enforces a unique index on the ID field
